@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Aktivasi Kartu Review</title>
+
+    <!-- =====================================================
+         SUPABASE
+         ===================================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 20px;
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f8fafc,
+                    #e2e8f0
+                );
+
+            color: #0f172a;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 460px;
+        }
+
+        .card {
+            background: #ffffff;
+
+            border-radius: 24px;
+
+            padding: 32px;
+
+            box-shadow:
+                0 20px 50px rgba(15, 23, 42, 0.12);
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+
+            margin: 0 auto 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 18px;
+
+            background: #4285f4;
+
+            color: white;
+
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        h1 {
+            text-align: center;
+
+            font-size: 26px;
+
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+
+            color: #64748b;
+
+            line-height: 1.6;
+
+            margin-bottom: 28px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 14px;
+
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 14px 16px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 12px;
+
+            outline: none;
+
+            font-size: 16px;
+
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #4285f4;
+
+            box-shadow:
+                0 0 0 3px rgba(66, 133, 244, 0.12);
+        }
+
+        /*
+         * Google PlaceAutocompleteElement
+         */
+        gmp-place-autocomplete {
+            width: 100%;
+
+            display: block;
+        }
+
+        .pin-wrapper {
+            position: relative;
+        }
+
+        .pin-input {
+            text-align: center;
+
+            letter-spacing: 8px;
+
+            font-size: 22px;
+
+            font-weight: 700;
+        }
+
+        button {
+            width: 100%;
+
+            border: none;
+
+            border-radius: 12px;
+
+            padding: 15px;
+
+            background: #4285f4;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #3367d6;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+
+            cursor: not-allowed;
+        }
+
+        .message {
+            display: none;
+
+            margin-bottom: 20px;
+
+            padding: 14px;
+
+            border-radius: 12px;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+        }
+
+        .message.error {
+            display: block;
+
+            background: #fef2f2;
+
+            color: #b91c1c;
+        }
+
+        .message.success {
+            display: block;
+
+            background: #f0fdf4;
+
+            color: #15803d;
+        }
+
+        .loading {
+            text-align: center;
+
+            padding: 30px 0;
+
+            color: #64748b;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .selected-place {
+            margin-top: 10px;
+
+            padding: 12px;
+
+            border-radius: 10px;
+
+            background: #f1f5f9;
+
+            font-size: 13px;
+
+            color: #475569;
+
+            line-height: 1.5;
+        }
+
+        .card-code {
+            display: inline-block;
+
+            padding: 5px 9px;
+
+            margin-bottom: 12px;
+
+            border-radius: 8px;
+
+            background: #eff6ff;
+
+            color: #2563eb;
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+        .footer {
+            text-align: center;
+
+            margin-top: 20px;
+
+            font-size: 12px;
+
+            color: #94a3b8;
+        }
+
+        /*
+         * Supaya widget Google mengikuti ukuran form.
+         */
+        gmp-place-autocomplete::part(input) {
+            width: 100%;
+        }
+
+        @media (max-width: 480px) {
+
+            .card {
+                padding: 24px;
+
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 23px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <div class="logo">
+            ★
+        </div>
+
+        <!-- =================================================
+             LOADING
+             ================================================= -->
+
+        <div id="loadingScreen" class="loading">
+
+            <div>
+                Memeriksa kartu...
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FORM AKTIVASI
+             ================================================= -->
+
+        <div id="activationScreen" class="hidden">
+
+            <div style="text-align:center">
+
+                <div id="cardCode"
+                     class="card-code">
+                    C001
+                </div>
+
+            </div>
+
+            <h1>
+                Aktifkan Kartu
+            </h1>
+
+            <p class="subtitle">
+                Hubungkan kartu ini dengan lokasi Google Maps toko Anda.
+            </p>
+
+
+            <!-- ERROR / SUCCESS MESSAGE -->
+
+            <div id="message"
+                 class="message">
+            </div>
+
+
+            <!-- =================================================
+                 NAMA TOKO
+                 ================================================= -->
+
+            <div class="section">
+
+                <label>
+                    Nama Toko
+                </label>
+
+                <!--
+                    Google Autocomplete akan otomatis
+                    memasukkan input di sini.
+                -->
+
+                <div id="googleAutocomplete"></div>
+
+                <div
+                    id="selectedPlace"
+                    class="selected-place hidden">
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 PIN
+                 ================================================= -->
+
+            <div class="section">
+
+                <label for="pin">
+                    Buat PIN 4 Angka
+                </label>
+
+                <div class="pin-wrapper">
+
+                    <input
+                        id="pin"
+                        class="pin-input"
+                        type="password"
+                        inputmode="numeric"
+                        maxlength="4"
+                        pattern="[0-9]{4}"
+                        placeholder="••••"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 BUTTON
+                 ================================================= -->
+
+            <button
+                id="activateButton"
+                type="button">
+
+                Aktifkan Kartu
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             ERROR SCREEN
+             ================================================= -->
+
+        <div
+            id="errorScreen"
+            class="hidden">
+
+            <h1>
+                Terjadi Masalah
+            </h1>
+
+            <p
+                id="errorText"
+                class="subtitle">
+                Kartu tidak dapat diproses.
+            </p>
+
+            <button
+                onclick="location.reload()">
+
+                Coba Lagi
+
+            </button>
+
+        </div>
+
+
+        <div class="footer">
+            Sistem Kartu Google Review
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ==========================================================
+   ==========================================================
+   KONFIGURASI
+   ==========================================================
+   ========================================================== */
+
+
+/*
+ * =========================================================
+ * 1. SUPABASE URL
+ * =========================================================
+ *
+ * GANTI dengan Project URL Supabase lu.
+ *
+ * Contoh:
+ *
+ * https://abcdefghijk.supabase.co
+ */
+
+const SUPABASE_URL =
+    "https://jjffvngpedrrmxkvneko.supabase.co/rest/v1";
+
+
+/*
+ * =========================================================
+ * 2. SUPABASE PUBLISHABLE KEY
+ * =========================================================
+ *
+ * GANTI dengan Publishable key Supabase.
+ *
+ * Biasanya:
+ *
+ * sb_publishable_xxxxxxxxx
+ *
+ * Kalau project lama masih memakai key legacy:
+ *
+ * anon key
+ *
+ * JANGAN gunakan service_role / secret key.
+ */
+
+const SUPABASE_KEY =
+    "sb_publishable_I8qMeAXv7qCT2AEIRQIkLg_uOkhezm4";
+
+
+/*
+ * =========================================================
+ * 3. GOOGLE MAPS API KEY
+ * =========================================================
+ *
+ * GANTI dengan API Key Google Cloud lu.
+ *
+ * Contoh:
+ *
+ * AIzaSyXXXXXXXXXXXX
+ */
+
+const GOOGLE_MAPS_API_KEY =
+    "AIzaSyAAaTCMKqHCDD3UjDm8ND06tjMzcMKy4ns";
+
+
+/* ==========================================================
+   JANGAN UBAH BAGIAN DI BAWAH INI
+   ========================================================== */
+
+
+/*
+ * Cek konfigurasi
+ */
+
+const configError =
+    SUPABASE_URL.includes("GANTI_DENGAN") ||
+    SUPABASE_KEY.includes("GANTI_DENGAN") ||
+    GOOGLE_MAPS_API_KEY.includes("GANTI_DENGAN");
+
+
+/*
+ * Buat koneksi Supabase
+ */
+
+let supabaseClient = null;
+
+if (!configError) {
+
+    supabaseClient =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+}
+
+
+/*
+ * Ambil elemen HTML
+ */
+
+const loadingScreen =
+    document.getElementById("loadingScreen");
+
+const activationScreen =
+    document.getElementById("activationScreen");
+
+const errorScreen =
+    document.getElementById("errorScreen");
+
+const errorText =
+    document.getElementById("errorText");
+
+const message =
+    document.getElementById("message");
+
+const cardCodeElement =
+    document.getElementById("cardCode");
+
+const pinInput =
+    document.getElementById("pin");
+
+const activateButton =
+    document.getElementById("activateButton");
+
+const googleAutocompleteContainer =
+    document.getElementById("googleAutocomplete");
+
+const selectedPlaceElement =
+    document.getElementById("selectedPlace");
+
+
+/*
+ * Variabel kartu
+ */
+
+let currentCardCode = null;
+
+
+/*
+ * Data Google Place yang dipilih
+ */
+
+let selectedPlace = null;
+
+
+/* ==========================================================
+   HELPER
+   ========================================================== */
+
+
+/*
+ * Tampilkan error
+ */
+
+function showError(text) {
+
+    loadingScreen.classList.add("hidden");
+
+    activationScreen.classList.add("hidden");
+
+    errorScreen.classList.remove("hidden");
+
+    errorText.textContent = text;
+}
+
+
+/*
+ * Tampilkan pesan pada form
+ */
+
+function showMessage(text, type = "error") {
+
+    message.textContent = text;
+
+    message.className =
+        "message " + type;
+}
+
+
+/*
+ * Sembunyikan pesan
+ */
+
+function hideMessage() {
+
+    message.textContent = "";
+
+    message.className = "message";
+}
+
+
+/*
+ * Hash PIN menggunakan SHA-256.
+ *
+ * Jadi PIN tidak disimpan sebagai teks biasa.
+ */
+
+async function hashPin(pin) {
+
+    const encoder =
+        new TextEncoder();
+
+    const data =
+        encoder.encode(pin);
+
+    const hashBuffer =
+        await crypto.subtle.digest(
+            "SHA-256",
+            data
+        );
+
+    const hashArray =
+        Array.from(
+            new Uint8Array(hashBuffer)
+        );
+
+    return hashArray
+        .map(
+            byte =>
+                byte.toString(16).padStart(2, "0")
+        )
+        .join("");
+}
+
+
+/*
+ * Ambil ID kartu dari URL.
+ *
+ * Contoh:
+ *
+ * domain.com/?id=C001
+ *
+ * hasil:
+ *
+ * C001
+ */
+
+function getCardCodeFromURL() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const id =
+        params.get("id");
+
+    if (!id) {
+        return null;
+    }
+
+    return id
+        .trim()
+        .toUpperCase();
+}
+
+
+/* ==========================================================
+   GOOGLE MAPS
+   ========================================================== */
+
+
+/*
+ * Load Google Maps JavaScript API
+ */
+
+async function loadGoogleMaps() {
+
+    if (configError) {
+        return;
+    }
+
+    /*
+     * Cegah load dua kali.
+     */
+
+    if (window.google?.maps) {
+        return;
+    }
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const script =
+                document.createElement("script");
+
+            script.src =
+                "https://maps.googleapis.com/maps/api/js" +
+                "?key=" +
+                encodeURIComponent(
+                    GOOGLE_MAPS_API_KEY
+                ) +
+                "&v=weekly" +
+                "&loading=async";
+
+            script.async = true;
+
+            script.defer = true;
+
+            script.onload = resolve;
+
+            script.onerror = () => {
+
+                reject(
+                    new Error(
+                        "Google Maps gagal dimuat."
+                    )
+                );
+
+            };
+
+            document.head.appendChild(script);
+
+        }
+    );
+}
+
+
+/*
+ * Buat Google Place Autocomplete Widget
+ */
+
+async function initGoogleAutocomplete() {
+
+    try {
+
+        await loadGoogleMaps();
+
+        const {
+            PlaceAutocompleteElement
+        } =
+            await google.maps.importLibrary(
+                "places"
+            );
+
+
+        /*
+         * Buat widget.
+         */
+
+        const autocomplete =
+            new PlaceAutocompleteElement();
+
+
+        /*
+         * Placeholder.
+         */
+
+        autocomplete.placeholder =
+            "Cari nama toko di Google Maps";
+
+
+        /*
+         * Batasi ke Indonesia.
+         */
+
+        autocomplete.includedRegionCodes =
+            ["ID"];
+
+
+        /*
+         * Masukkan ke halaman.
+         */
+
+        googleAutocompleteContainer
+            .innerHTML = "";
+
+        googleAutocompleteContainer
+            .appendChild(autocomplete);
+
+
+        /*
+         * Ketika user memilih toko.
+         */
+
+        autocomplete.addEventListener(
+            "gmp-select",
+            async ({ placePrediction }) => {
+
+                try {
+
+                    /*
+                     * Ubah prediction
+                     * menjadi Place.
+                     */
+
+                    const place =
+                        placePrediction.toPlace();
+
+
+                    /*
+                     * Kita hanya meminta
+                     * field yang diperlukan.
+                     */
+
+                    await place.fetchFields({
+                        fields: [
+                            "displayName",
+                            "formattedAddress",
+                            "id"
+                        ]
+                    });
+
+
+                    /*
+                     * Simpan data tempat.
+                     */
+
+                    selectedPlace = {
+
+                        id: place.id,
+
+                        name:
+                            place.displayName ||
+                            "",
+
+                        address:
+                            place.formattedAddress ||
+                            ""
+
+                    };
+
+
+                    /*
+                     * Tampilkan tempat yang
+                     * dipilih.
+                     */
+
+                    selectedPlaceElement
+                        .classList
+                        .remove("hidden");
+
+
+                    selectedPlaceElement
+                        .textContent =
+                        "✓ " +
+                        selectedPlace.name +
+                        (
+                            selectedPlace.address
+                                ? " — " +
+                                  selectedPlace.address
+                                : ""
+                        );
+
+
+                    hideMessage();
+
+                }
+                catch (error) {
+
+                    console.error(error);
+
+                    selectedPlace = null;
+
+                    showMessage(
+                        "Toko tidak dapat diproses. Silakan pilih toko dari daftar Google Maps."
+                    );
+
+                }
+
+            }
+        );
+
+
+        /*
+         * Jika Google mengembalikan error.
+         */
+
+        autocomplete.addEventListener(
+            "gmp-error",
+            () => {
+
+                showMessage(
+                    "Google Maps tidak dapat digunakan. Periksa API Key dan API yang sudah diaktifkan."
+                );
+
+            }
+        );
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        showMessage(
+            "Google Maps gagal dimuat. Periksa Google Maps API Key."
+        );
+
+    }
+
+}
+
+
+/* ==========================================================
+   CEK KARTU
+   ========================================================== */
+
+
+/*
+ * Fungsi utama ketika halaman dibuka.
+ */
+
+async function checkCard() {
+
+    /*
+     * Jika konfigurasi belum diganti.
+     */
+
+    if (configError) {
+
+        showError(
+            "Konfigurasi belum diisi. Buka index.html lalu isi SUPABASE_URL, SUPABASE_KEY, dan GOOGLE_MAPS_API_KEY."
+        );
+
+        return;
+    }
+
+
+    /*
+     * Ambil ID kartu dari URL.
+     */
+
+    currentCardCode =
+        getCardCodeFromURL();
+
+
+    /*
+     * Tidak ada ?id=
+     */
+
+    if (!currentCardCode) {
+
+        showError(
+            "Kode kartu tidak ditemukan. Pastikan URL memiliki format ?id=C001."
+        );
+
+        return;
+    }
+
+
+    /*
+     * Validasi format kartu.
+     *
+     * Contoh yang diterima:
+     *
+     * C001
+     * C025
+     * C100
+     */
+
+    if (!/^C\d{3}$/.test(currentCardCode)) {
+
+        showError(
+            "Format kode kartu tidak valid."
+        );
+
+        return;
+    }
+
+
+    /*
+     * Tampilkan kode kartu.
+     */
+
+    cardCodeElement.textContent =
+        currentCardCode;
+
+
+    try {
+
+        /*
+         * Cari kartu berdasarkan card_code.
+         */
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("cards")
+                .select(
+                    "card_code,is_active,shop_name,place_id,review_url"
+                )
+                .eq(
+                    "card_code",
+                    currentCardCode
+                )
+                .maybeSingle();
+
+
+        /*
+         * Kalau Supabase error.
+         */
+
+        if (error) {
+
+            console.error(error);
+
+            showError(
+                "Tidak dapat terhubung ke database. Periksa Supabase URL, key, dan izin tabel."
+            );
+
+            return;
+        }
+
+
+        /*
+         * Kartu tidak ditemukan.
+         */
+
+        if (!data) {
+
+            showError(
+                "Kartu " +
+                currentCardCode +
+                " tidak ditemukan di database."
+            );
+
+            return;
+        }
+
+
+        /*
+         * =================================================
+         * KARTU SUDAH AKTIF
+         * =================================================
+         */
+
+        if (data.is_active) {
+
+            /*
+             * Kalau review URL tersedia,
+             * langsung redirect.
+             */
+
+            if (data.review_url) {
+
+                window.location.replace(
+                    data.review_url
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * Fallback kalau review_url
+             * kosong tetapi place_id ada.
+             */
+
+            if (data.place_id) {
+
+                const fallbackURL =
+                    "https://search.google.com/local/writereview?placeid=" +
+                    encodeURIComponent(
+                        data.place_id
+                    );
+
+                window.location.replace(
+                    fallbackURL
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * Kartu aktif tetapi data Google
+             * tidak lengkap.
+             */
+
+            showError(
+                "Kartu sudah aktif, tetapi link Google Review belum tersedia."
+            );
+
+            return;
+        }
+
+
+        /*
+         * =================================================
+         * KARTU BELUM AKTIF
+         * =================================================
+         */
+
+        loadingScreen.classList.add(
+            "hidden"
+        );
+
+        activationScreen.classList.remove(
+            "hidden"
+        );
+
+
+        /*
+         * Load Google Autocomplete.
+         */
+
+        await initGoogleAutocomplete();
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        showError(
+            "Terjadi kesalahan saat memproses kartu."
+        );
+
+    }
+
+}
+
+
+/* ==========================================================
+   AKTIVASI KARTU
+   ========================================================== */
+
+
+activateButton.addEventListener(
+    "click",
+    async () => {
+
+        hideMessage();
+
+
+        /*
+         * Pastikan toko sudah dipilih.
+         */
+
+        if (!selectedPlace) {
+
+            showMessage(
+                "Pilih toko dari hasil Google Maps terlebih dahulu."
+            );
+
+            return;
+        }
+
+
+        /*
+         * Ambil PIN.
+         */
+
+        const pin =
+            pinInput.value.trim();
+
+
+        /*
+         * Pastikan PIN 4 angka.
+         */
+
+        if (!/^\d{4}$/.test(pin)) {
+
+            showMessage(
+                "PIN harus terdiri dari tepat 4 angka."
+            );
+
+            pinInput.focus();
+
+            return;
+        }
+
+
+        /*
+         * Cegah klik berkali-kali.
+         */
+
+        activateButton.disabled =
+            true;
+
+        activateButton.textContent =
+            "Mengaktifkan...";
+
+
+        try {
+
+            /*
+             * Hash PIN.
+             */
+
+            const pinHash =
+                await hashPin(pin);
+
+
+            /*
+             * Buat URL Google Review.
+             *
+             * Place ID berasal dari Google.
+             */
+
+            const reviewURL =
+                "https://search.google.com/local/writereview?placeid=" +
+                encodeURIComponent(
+                    selectedPlace.id
+                );
+
+
+            /*
+             * Update kartu.
+             *
+             * Kita hanya update kartu yang:
+             *
+             * 1. card_code cocok
+             * 2. masih belum aktif
+             *
+             * Ini mencegah kartu aktif ditimpa
+             * secara tidak sengaja.
+             */
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("cards")
+                    .update({
+
+                        is_active: true,
+
+                        shop_name:
+                            selectedPlace.name,
+
+                        place_id:
+                            selectedPlace.id,
+
+                        review_url:
+                            reviewURL,
+
+                        pin_hash:
+                            pinHash,
+
+                        activated_at:
+                            new Date().toISOString(),
+
+                        updated_at:
+                            new Date().toISOString()
+
+                    })
+                    .eq(
+                        "card_code",
+                        currentCardCode
+                    )
+                    .eq(
+                        "is_active",
+                        false
+                    )
+                    .select();
+
+
+            /*
+             * Supabase error.
+             */
+
+            if (error) {
+
+                console.error(error);
+
+                showMessage(
+                    "Aktivasi gagal: " +
+                    error.message
+                );
+
+                activateButton.disabled =
+                    false;
+
+                activateButton.textContent =
+                    "Aktifkan Kartu";
+
+                return;
+            }
+
+
+            /*
+             * Tidak ada baris yang berubah.
+             *
+             * Kemungkinan kartu sudah diaktifkan
+             * oleh orang lain.
+             */
+
+            if (!data || data.length === 0) {
+
+                showMessage(
+                    "Kartu sudah aktif atau tidak ditemukan."
+                );
+
+                activateButton.disabled =
+                    false;
+
+                activateButton.textContent =
+                    "Aktifkan Kartu";
+
+                return;
+            }
+
+
+            /*
+             * Aktivasi berhasil.
+             */
+
+            showMessage(
+                "Kartu berhasil diaktifkan. Mengarahkan ke Google Review...",
+                "success"
+            );
+
+
+            /*
+             * Tunggu sebentar agar pesan sukses
+             * sempat terlihat.
+             */
+
+            setTimeout(
+                () => {
+
+                    window.location.replace(
+                        reviewURL
+                    );
+
+                },
+                800
+            );
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            showMessage(
+                "Terjadi kesalahan. Silakan coba lagi."
+            );
+
+            activateButton.disabled =
+                false;
+
+            activateButton.textContent =
+                "Aktifkan Kartu";
+
+        }
+
+    }
+);
+
+
+/* ==========================================================
+   PIN
+   ========================================================== */
+
+
+/*
+ * Hanya izinkan angka.
+ */
+
+pinInput.addEventListener(
+    "input",
+    () => {
+
+        pinInput.value =
+            pinInput.value
+                .replace(/\D/g, "")
+                .slice(0, 4);
+
+    }
+);
+
+
+/* ==========================================================
+   START APP
+   ========================================================== */
+
+checkCard();
+
+</script>
+
+</body>
+</html>
